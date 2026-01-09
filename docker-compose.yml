@@ -1,0 +1,23 @@
+services:
+  comfyui:
+    build: .
+    container_name: comfyui-jupyter
+    ports:
+      - "8188:8188"  # ComfyUI
+      - "8888:8888"  # Jupyter Notebook
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - comfyui-data:/root
+    security_opt:
+      - "label=type:nvidia_container_t"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+volumes:
+    comfyui-data:
+    
