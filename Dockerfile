@@ -11,4 +11,5 @@ RUN pip install --no-cache-dir notebook
 # Expose ports for ComfyUI (default 8188) and Jupyter
 EXPOSE 8188 8888
 
-CMD ["bash", "-c", "python3 ./ComfyUI/main.py & jupyter notebook --ip=0.0.0.0 --port=8888 --allow-root --no-browser --ServerApp.token=pass"]
+CMD ["bash", "-c", "python3 ./ComfyUI/main.py --listen --port 8188 & jupyter notebook --ip=0.0.0.0 --port=8888 --allow-root --no-browser --ServerApp.token=z"]
+
