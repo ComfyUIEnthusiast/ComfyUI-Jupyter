@@ -1,16 +1,49 @@
-# Use the base ComfyUI image
-FROM yanwk/comfyui-boot:cu128-slim
+FROM nvidia/cuda:13.0.0-devel-ubuntu24.04
 
-# Set environment variables for Jupyter
-ENV PYTHONUNBUFFERED=1
-ENV JUPYTER_PORT=8888
+# Non-interactive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TORCH_CUDA_ARCH_LIST="8.9" 
 
-# Install Jupyter Notebook
-RUN pip install --no-cache-dir notebook
+# Update system and install basic tools & Python
+RUN apt-get update && apt-get install -y \
+	supervisor \
+    python3.12 python3.12-venv python3.12-dev python3-pip \
+    git wget curl build-essential cmake libjpeg-dev zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+	
+# Make python3.12 the default python
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 \
+    && python --version
+	
+# Create a virtual environment for all Python packages
+ENV VENV_PATH=/opt/venv
+RUN python -m venv $VENV_PATH
 
-# Expose ports for ComfyUI (default 8188) and Jupyter
-EXPOSE 8188 8888
+# Ensure the virtual environment is used for all subsequent commands
+ENV PATH="$VENV_PATH/bin:$PATH"
 
-WORKDIR /root
+# Upgrade pip and install PyTorch + torchvision for CUDA 13
+RUN pip install --upgrade pip
 
-CMD ["bash", "-c", "jupyter notebook --ip=0.0.0.0 --port=8888 --allow-root --no-browser --ServerApp.token=z & bash /runner-scripts/entrypoint.sh"]
+# Install PyTorch nightly compatible with CUDA 13
+RUN pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu130 \
+    torchvision --pre --index-url https://download.pytorch.org/whl/nightly/cu130
+
+# Clone ComfyUI repo
+RUN git clone --recurse-submodules https://github.com/comfyanonymous/ComfyUI.git /root/ComfyUI
+
+WORKDIR /root/ComfyUI
+
+# Install Python dependencies
+RUN pip install -r requirements.txt
+
+WORKDIR /
+
+# Install Jupyter Notebook inside venv for supervisord
+RUN pip install notebook
+
+#Copy supervisor
+COPY supervisord.conf .
+
+# Start ComfyUI
+CMD ["/usr/bin/supervisord", "-c", "/supervisord.conf"]
