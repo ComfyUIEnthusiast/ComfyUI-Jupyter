@@ -29,6 +29,8 @@ RUN pip install --upgrade pip
 RUN pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu130 \
     torchvision --pre --index-url https://download.pytorch.org/whl/nightly/cu130
 
+RUN pip install https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.7.16/flash_attn-2.8.3%2Bcu130torch2.10-cp312-cp312-linux_x86_64.whl
+
 # Clone ComfyUI repo
 RUN git clone --recurse-submodules https://github.com/comfyanonymous/ComfyUI.git /root/ComfyUI
 
